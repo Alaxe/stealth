@@ -1,5 +1,5 @@
 Conf = ({
-    gameW: 900,
+    gameW: 800,
     gameH: 450,
     tileSize: 32,
 

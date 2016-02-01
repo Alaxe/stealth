@@ -471,8 +471,8 @@ var Light = (function() {
             return false;
         } else if (angle > this.fov * 0.5) {
             return false;
-        /*} else if (!this.visiblePolygon.contains(point.x, point.y)) {
-            return false;*/
+        } else if (!this.visiblePolygon.contains(point.x, point.y)) {
+            return false;
         } else {
             return true;
         }
