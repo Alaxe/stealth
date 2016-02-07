@@ -23,6 +23,10 @@ Conf = ({
         lightColor: 0x444444,
         shadowColor: 0xAAAAAA
     },
+    Coins: {
+        gids: [8, 9],
+        score: [1, 5]
+    },
 
     solidTiles: [2, 3],
     opaqueTiles: [3],

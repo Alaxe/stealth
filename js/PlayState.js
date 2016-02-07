@@ -7,6 +7,8 @@ PlayState = (function() {
 
         game.load.spritesheet('guard', 'assets/enemy.png', 
                     Conf.tileSize, Conf.tileSize);
+        game.load.spritesheet('coins', 'assets/coins.png',
+                    Conf.tileSize, Conf.tileSize);
 
         game.load.image('tiles', 'assets/tiles.png');
         game.load.tilemap('map', 'assets/map.json', null,
@@ -16,16 +18,25 @@ PlayState = (function() {
     };
 
     function createWorld() {
+        var i = 0;
         game.stage.backgroundColor = "00ff00";
         
         this.map = game.add.tilemap('map');
         this.map.addTilesetImage('tiles');
         this.map.setCollision(Conf.solidTiles);
 
-        this.mapLayer = this.map.createLayer('Base Layer');
+        this.mapLayer = this.map.createLayer('level');
         this.mapLayer.resizeWorld();
 
         this.lighting = new Lighting(this.map);
+
+        this.pickups = game.add.group();
+        for (i = 0;i < Conf.Coins.gids.length;i++) {
+            this.map.createFromObjects('coins', Conf.Coins.gids[i], 'coins', 
+                                       i, true, false, this.pickups);
+        }
+        game.physics.enable(this.pickups, Phaser.Physics.ARCADE);
+        console.log(this.pickups);
     }
 
     function addHumans() {
@@ -60,6 +71,11 @@ PlayState = (function() {
     function handleCollisions() {
         game.physics.arcade.collide(this.player, this.mapLayer);
         game.physics.arcade.collide(this.player, this.guards);
+
+        game.physics.arcade.collide(this.player, this.pickups, function(player, pickup) {
+            pickup.kill();
+            console.log(Conf.Coins.score[pickup.frame]);
+        });
     }
     
     PlayState.prototype.update = function() {
