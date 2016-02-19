@@ -24,9 +24,16 @@ Conf = ({
         shadowColor: 0xAAAAAA
     },
     Coins: {
-        gids: [8, 9],
+        gids: [16, 17],
         score: [1, 5]
     },
+    Scoring: {
+        prefix: 'gold: ',
+        fontSize: 30,
+        color: 0xFFFFFF,
+        offset: 2
+    },
+    
 
     solidTiles: [2, 3],
     opaqueTiles: [3],

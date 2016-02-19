@@ -4,13 +4,13 @@ Human = (function () {
         var y = pY || 0;
 
         //calling the Sprite constructor
-
         Phaser.Sprite.call(this, game, x, y, pSpriteKey);
 
         this.animations.add('walk', [0, 1, 2, 3], 10, true);
         this.anchor.setTo(0.5, 0.5);
 
         game.physics.enable(this, Phaser.Physics.ARCADE);
+
         this.body.collideWorldBounds = true;
 
         this.body.setSize(this.width * Conf.Human.size, 
@@ -19,6 +19,7 @@ Human = (function () {
         this.speed = Conf.Human.speed;
 
         game.add.existing(this);
+
     };
 
     Human.prototype = Object.create(Phaser.Sprite.prototype);
@@ -89,7 +90,6 @@ Player = (function() {
         Human.call(this, spriteKey);
 
         this.cursors = game.input.keyboard.createCursorKeys();
-        this.x = this.y = 300;
     };
     
     Player.prototype = Object.create(Human.prototype);
