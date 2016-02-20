@@ -88,7 +88,6 @@ Player = (function() {
         var spriteKey = pSpriteKey || 'player';
 
         Human.call(this, spriteKey);
-
         this.cursors = game.input.keyboard.createCursorKeys();
     };
     
@@ -244,7 +243,7 @@ Guard = (function() {
         }
 
         if (this.spotted >= 1) {
-            game.state.start('FailState');
+            game.state.start('Fail');
         }
 
         this.light.lightArea.tint = getLightColor.call(this);

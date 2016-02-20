@@ -7,7 +7,7 @@ PlayState = (function() {
 
         game.load.spritesheet('guard', 'assets/enemy.png', 
                     Conf.tileSize, Conf.tileSize);
-        game.load.spritesheet('coins', 'assets/coins.png',
+        game.load.spritesheet('objects', 'assets/objects.png',
                     Conf.tileSize, Conf.tileSize);
 
         game.load.image('tiles', 'assets/tiles.png');
@@ -23,8 +23,7 @@ PlayState = (function() {
 
     function createWorld() {
         var i = 0;
-        game.stage.backgroundColor = "00ff00";
-        
+
         this.map = game.add.tilemap('map');
         this.map.addTilesetImage('tiles');
         this.map.setCollision(Conf.solidTiles);
@@ -35,11 +34,18 @@ PlayState = (function() {
         this.lighting = new Lighting(this.map);
 
         this.pickups = game.add.group();
-        for (i = 0;i < Conf.Coins.gids.length;i++) {
-            this.map.createFromObjects('coins', Conf.Coins.gids[i], 'coins', 
+        for (i = 0;i < Conf.Score.gids.length;i++) {
+            this.map.createFromObjects('objects', Conf.Score.gids[i], 'objects', 
                                        i, true, false, this.pickups);
         }
         game.physics.enable(this.pickups, Phaser.Physics.ARCADE);
+
+        this.exits = game.add.group();
+        for (i = 0;i < Conf.exitGids.length;i++) {
+            this.map.createFromObjects('objects', Conf.exitGids[i], 'objects',
+                                       i + Conf.Score.gids.length, true, false,
+                                       this.exits);
+        }
     }
 
     function addHumans() {
@@ -68,48 +74,107 @@ PlayState = (function() {
         }
     }
 
-    function addScoring() {
+    function addText() {
+        this.score = game.add.bitmapText(0, 0, Conf.Font.name);
+        this.score.fontSize = Conf.Font.size;
+        this.score.tint = Conf.Font.color;
 
-        this.score = game.add.bitmapText(0, 0, 'visitor');
         this.score.num = 0;
-        this.score.fontSize = Conf.Scoring.fontSize;
-        this.score.text = Conf.Scoring.prefix + this.score.num.toString();
+        this.score.text = Conf.Score.scorePrefix + this.score.num.toString();
 
-        this.score.x = Conf.Scoring.offset;
-        this.score.y = Conf.Scoring.offset;
         this.score.fixedToCamera = true;
+        this.score.cameraOffset.x = Conf.Score.offset;
+        this.score.cameraOffset.y = Conf.Score.offset;
 
-        this.score.tint = Conf.Scoring.color;
 
+        this.target = game.add.bitmapText(0, 0, Conf.Font.name);
+        this.target.fontSize = Conf.Font.size;
+        this.target.tint = Conf.Font.color;
+
+        this.target.num = this.map.properties.targetGold;
+        this.target.text = Conf.Score.targetPrefix + this.target.num;
+
+        this.target.fixedToCamera = true;
+        this.target.cameraOffset.x = Conf.Score.offset;
+        this.target.cameraOffset.y = this.score.height + 2 * Conf.Score.offset;
+
+        this.info = game.add.bitmapText(0, 0, Conf.Font.name);
+        this.info.fontSize = Conf.Font.size;
+        this.info.tint = Conf.Font.color;
+        this.info.maxWidth = Conf.Info.maxWidth;
+        this.info.fixedToCamera = true;
+        //this.helpText.time = 0;
+        //this.helpText.text = 'biai';
     }
+    
+
     PlayState.prototype.create = function() {
         game.physics.startSystem(Phaser.Physics.ARCADE);
 
         createWorld.call(this);
         addHumans.call(this);
-
         game.world.bringToTop(this.lighting.group);
 
-        addScoring.call(this);
-
+        addText.call(this);
+        this.action = game.input.keyboard.addKey(Conf.action);
     };
+    function checkExits() {
+        var i = 0,
+            exits = this.exits.children;
+
+        for (i = 0;i < exits.length;i++) {
+            if (exits[i].overlap(this.player)) {
+                if (this.score.num < this.target.num) {
+                    setInfo.call(this, Conf.Info.moreGold, 0.5);
+                } else {
+                    setInfo.call(this, Conf.Info.canExit, 0.5);
+                    if (this.action.isDown) {
+                        game.state.start('Beaten', true, false, this.score.num);
+                        console.log('GG');
+                    }
+                }
+            }
+        }
+    }
     function pickupCoin(player, pickup) {
         pickup.kill();
-        this.score.num += Conf.Coins.score[pickup.frame];
-        this.score.text = Conf.Scoring.prefix + this.score.num.toString();
+        this.score.num += Conf.Score.points[pickup.frame];
+        this.score.text = Conf.Score.scorePrefix + this.score.num.toString();
+        if (this.score.num >= this.target.num) {
+            this.score.tint = this.target.tint = Conf.Score.colorReached;
+        }
 
     }
-
     function handleCollisions() {
         game.physics.arcade.collide(this.player, this.mapLayer);
         game.physics.arcade.collide(this.player, this.guards);
 
         game.physics.arcade.collide(this.player, this.pickups, pickupCoin, null,
-                                    {score: this.score});
+                                    this);
+    }
+    function setInfo(text, time) {
+        if (time === null) {
+            this.info.time = Infinity;
+        } else {
+            this.info.time = time * 1000;
+        } 
+        this.info.visible = true;
+        this.info.text = text;
+        this.info.cameraOffset.y = Conf.gameH - this.info.height - 
+                Conf.Font.margin.bottom;
+        this.info.cameraOffset.x = (Conf.gameW - this.info.width) * 0.5;
+    }
+    function updateHud() {
+        this.info.time -= game.time.physicsElapsedMS;
+        if (this.info.time < 0) {
+            this.info.text = '';
+        }
     }
     
     PlayState.prototype.update = function() {
         handleCollisions.call(this);
+        checkExits.call(this);
+        updateHud.call(this);
 
         this.lighting.update();
     };

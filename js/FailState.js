@@ -9,22 +9,18 @@ FailState = (function() {
     };
     FailState.prototype.create = function() {
         this.text = game.add.bitmapText(0, 0, 'visitor', '', 48);
-        this.text.setText('You have been spotted!\n\n' + 
-                          'Press space to restart');
-        this.text.align = 'center';
+        this.text.text = Conf.FailState.text;
+        this.text.fontSize = Conf.Font.size;
 
         this.text.x = (Conf.gameW - this.text.width) * 0.5;
         this.text.y = (Conf.gameH - this.text.height) * 0.4;
-        this.text.tint = 0xFF2020;
+        this.text.tint = Conf.FailState.textColor;
 
-        this.key = game.input.keyboard.addKey(Phaser.KeyCode.SPACEBAR);
+        this.key = game.input.keyboard.addKey(Conf.action);
         this.key.onDown.add(function() {
-            game.state.start('PlayState');
+            game.state.start('Play');
         });
     };
-
-
-
 
     return FailState;
 }) ();

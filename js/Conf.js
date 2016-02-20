@@ -23,22 +23,45 @@ Conf = ({
         lightColor: 0x444444,
         shadowColor: 0xAAAAAA
     },
-    Coins: {
-        gids: [16, 17],
-        score: [1, 5]
+    Score: {
+        targetPrefix: 'needed: ',
+        scorePrefix: 'gold: ',
+        colorReached: 0x00FF00,
+        offset: 5,
+        gids: [6, 7],
+        points: [1, 5]
     },
-    Scoring: {
-        prefix: 'gold: ',
-        fontSize: 30,
+    Font: {
+        name: 'visitor',
+        size: 30,
         color: 0xFFFFFF,
-        offset: 2
+        margin: {
+            bottom: 50
+        }
     },
-    
+    Info: {
+        moreGold: 'You need to steal more gold before leaving',
+        canExit: 'Press SPACE to exit the level, or try to steal more',
+        maxWidth: 500
+    },
+    action: Phaser.KeyCode.SPACEBAR,
 
+    exitGids: [8],
     solidTiles: [2, 3],
     opaqueTiles: [3],
 
     FailState: {
+        text: 'You have been spotted!\n\n' + 
+              'Press space to restart',
+        textColor: 0xFF2020,
+        bgColor: 0x505050
+    },
+    BeatenState: {
+        text: 'You have passed the level successfully\n' +
+              'Gold stolen: <score>\n' +   
+              'Press SPACE to restart',
+        textColor: 0x20FF20,
         bgColor: 0x505050
     }
+
 });
