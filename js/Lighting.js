@@ -332,7 +332,6 @@ var Lighting = (function () {
         if (rect) {
             rect.x -= x;
             rect.y -= y;
-            console.log(rect);
         }
 
         for (i = 0;i < this.bounds.length;i++) {
@@ -401,7 +400,6 @@ var Lighting = (function () {
         var avgHeapD = 0;
 
         for (i = 1;i < segEnds.length;i++) {
-            //console.log(segEnds[i], closestSeg.arr, i);
             if (segEnds[i].isStart) {
                 if (Math.abs(segEnds[i].seg.end.originAngle() -
                              segEnds[i].originAngle()) > 0.01) {
@@ -433,7 +431,6 @@ var Lighting = (function () {
             }
         }
 
-        //console.log(avgHeapD / segEnds.length);
 
 
         for (i = 0;i < awns.length;i++) {

@@ -143,6 +143,10 @@ Guard = (function() {
 
         this.lastPoint = 0;
         this.waitTime = this.path[0].wait;
+        if (this.path[0].rotation) {
+            this.rotation = this.path[0].rotation * Math.PI;
+        }
+
         
         this.speed = Conf.Guard.speed;
         this.body.immovable = true;
@@ -243,7 +247,7 @@ Guard = (function() {
         
         for (i = 0;i < playerCorners.length;i++) {
             if (this.light.pointVisible(playerCorners[i])) {
-        //        playerVisible = true;
+                playerVisible = true;
                 break;
             }
         }

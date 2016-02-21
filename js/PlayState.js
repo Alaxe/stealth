@@ -11,15 +11,15 @@ PlayState = (function() {
                     Conf.tileSize, Conf.tileSize);
 
         game.load.image('tiles', 'assets/tiles.png');
-        game.load.tilemap('map', 'assets/map.json', null,
+        game.load.tilemap('map', 'assets/level1.json', null,
                 Phaser.Tilemap.TILED_JSON);
 
-        game.load.json('guard_data', 'assets/guard_paths.json');
+        game.load.json('guard_data', 'assets/level1-guards.json');
 
         game.load.bitmapFont('visitor', 'assets/visitor.png', 
                              'assets/visitor.fnt');
  
-    };
+     };
 
     function createWorld() {
         var i = 0;
@@ -30,6 +30,8 @@ PlayState = (function() {
 
         this.mapLayer = this.map.createLayer('level');
         this.mapLayer.resizeWorld();
+
+        console.log(this.map);
 
         this.lighting = new Lighting(this.map);
 
