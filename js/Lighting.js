@@ -94,16 +94,17 @@ var Lighting = (function () {
     var Lighting = function(map) {
         this.lights = [];
         this.humans = [];
-        this.dynamicCnt = 0;
+        this.dynamicWalls = [];
         this.group = game.add.group();
 
         if (map) {
-            this.buildWalls(map);
-            this.createFilter(map);
+            buildWalls.call(this, map);
+            createBounds.call(this, map);
+            createFilter.call(this, map);
         }
     };
 
-    Lighting.prototype.createFilter = function(map) {
+    function createFilter(map) {
         var x = 0, 
             y = 0;
 
@@ -115,7 +116,7 @@ var Lighting = (function () {
         this.filter.endFill();
 
         this.group.add(this.filter);
-    };
+    }
 
     function isWall(cur,  adj) {
         return cur.properties.opaque - adj.properties.opaque;
@@ -210,27 +211,27 @@ var Lighting = (function () {
             }
         }
     }
-    function addEdgeWalls(map) {
+    function createBounds(map) {
         var maxW = map.widthInPixels;
         var maxH = map.heightInPixels;
 
-        this.walls.push(new Phaser.Line(0, 0, 0, maxH));
-        this.walls.push(new Phaser.Line(0, 0, maxW, 0));
-        this.walls.push(new Phaser.Line(0, maxH, maxW, maxH));
-        this.walls.push(new Phaser.Line(maxW, 0, maxW, maxH));
+        this.bounds = [
+            new Phaser.Line(0, 0, 0, maxH),
+            new Phaser.Line(0, 0, maxW, 0),
+            new Phaser.Line(0, maxH, maxW, maxH),
+            new Phaser.Line(maxW, 0, maxW, maxH)];
     }
     Lighting.prototype.addLight = function(pLight) {
         pLight.lighting = this;
         this.lights.push(pLight);
         this.group.add(pLight.lightArea);
     };
-    Lighting.prototype.buildWalls = function(map) {
+    function buildWalls(map) {
         this.walls = [];
 
         setOpaque.call(this, map);
         addLevelWalls.call(this, map);
-        addEdgeWalls.call(this, map);
-    };
+    }
     function updateWalls() {
         var i = 0,
             body,
@@ -241,14 +242,11 @@ var Lighting = (function () {
 
         this.walls.length -= this.dynamicCnt;
 
-        for (i = 0;i < this.humans.length;i++) {
-            [].push.apply(this.walls, this.humans[i].getBodySides());
-        }
 
         this.dynamicCnt = 4 * this.humans.length;
     }
     Lighting.prototype.update = function() {
-        updateWalls.call(this);
+        //updateWalls.call(this);
     };
 
     Lighting.prototype.intersectRay = function(ray, walls) {
@@ -289,41 +287,74 @@ var Lighting = (function () {
         return (ray.intersects(a, false).getMagnitudeSq() <
             ray.intersects(b, false).getMagnitudeSq());
     }
-    function getSegments(x, y) {
-        var i,
-            segments = [],
-            curSeg = null,
-            vertRay = null,
-            tmp = null;
+    function normSeg(seg, x, y, rect, ans) {
+        if (!ans) {
+            ans = [];
+        }
+        var tmp = null,
+            vertRay = null;
 
-        for (i = 0;i < this.walls.length;i++) {
-            curSeg = new Phaser.Line(this.walls[i].start.x - x,
-                                     this.walls[i].start.y - y,
-                                     this.walls[i].end.x - x,
-                                     this.walls[i].end.y - y);
-
-            if (curSeg.start.originAngle() > curSeg.end.originAngle()) {
-                curSeg.rotate(Math.PI);
+        seg.start.subtract(x, y);
+        seg.end.subtract(x, y);
+            
+        if (rect) {
+            if ((seg.right < rect.left) || (seg.left > rect.right)) {
+                return ans;
+            }
+            if ((seg.top > rect.bottom) || (seg.bottom < rect.top)) {
+                return ans;
             }
 
-            if (curSeg.end.originAngle() - curSeg.start.originAngle() > Math.PI) { 
-                vertRay = new Phaser.Line(0, 0, -1, 0);
-                tmp = vertRay.intersects(curSeg, false);
+        }
 
-                segments.push(new Phaser.Line(curSeg.end.x, curSeg.end.y, 
-                                              tmp.x, tmp.y));
-                segments.push(new Phaser.Line(tmp.x, tmp.y - Number.EPSILON,
-                                              curSeg.start.x, curSeg.start.y));
-            } else {
-                segments.push(curSeg);
+        if (seg.start.originAngle() > seg.end.originAngle()) {
+            seg.start = [seg.end, seg.end = seg.start][0];
+        }
+        
+        if (seg.end.originAngle() - seg.start.originAngle() > Math.PI) { 
+            vertRay = new Phaser.Line(0, 0, -1, 0);
+            tmp = vertRay.intersects(seg, false);
+
+            ans.push(new Phaser.Line(seg.end.x, seg.end.y, tmp.x, tmp.y));
+            ans.push(new Phaser.Line(tmp.x, tmp.y - Number.EPSILON,
+                                          seg.start.x, seg.start.y));
+        } else {
+            ans.push(seg);
+        }
+        return ans;
+    }
+    function getSegments(x, y, rect) {
+        var i = 0,
+            j = 0,
+            segments = [],
+            bodySides = null;
+
+        if (rect) {
+            rect.x -= x;
+            rect.y -= y;
+            console.log(rect);
+        }
+
+        for (i = 0;i < this.bounds.length;i++) {
+            normSeg(this.bounds[i].clone(), x, y, null, segments);
+        }
+
+        for (i = 0;i < this.humans.length;i++) {
+            bodySides = this.humans[i].getBodySides();
+            for (j = 0;j < bodySides.length;j++) {
+                normSeg(bodySides[j], x, y, rect, segments);
             }
         }
+
+        for (i = 0;i < this.walls.length;i++) {
+            normSeg(this.walls[i].clone(), x, y, rect, segments);
+        }
+        //console.log(segments);
         
         for (i = 0;i < segments.length;i++) {
             segments[i].inRange = false;
             segments[i].seg = i;
         }
-
 
         return segments;
     }
@@ -336,13 +367,11 @@ var Lighting = (function () {
             segEnds[2 * i].isStart = true;
             segEnds[2 * i].segInd = segments[i].seg;
             segEnds[2 * i].seg = segments[i];
-            segEnds[2 * i].centAngle = segEnds[2 * i].originAngle();
 
             segEnds[2 * i + 1] = segments[i].end;
             segEnds[2 * i + 1].isStart = false;
             segEnds[2 * i + 1].segInd = segments[i].seg;
             segEnds[2 * i + 1].seg = segments[i];
-            segEnds[2 * i + 1].centAngle = segEnds[2 * i + 1].originAngle();
         }
 
         segEnds = segEnds.sort(function (a, b) {
@@ -355,8 +384,8 @@ var Lighting = (function () {
 
         return segEnds;
     }
-    Lighting.prototype.visiblePolygon = function(x, y) {
-        var segments = getSegments.call(this, x, y),
+    Lighting.prototype.visiblePolygon = function(x, y, rect) {
+        var segments = getSegments.call(this, x, y, rect),
             segEnds = getSegEnds.call(this, segments),
             curSeg = segEnds[0].seg,
             curStart = curSeg.start,
@@ -369,6 +398,7 @@ var Lighting = (function () {
         curSeg.inRange = true;
         closestSeg.push(curSeg);
 
+        var avgHeapD = 0;
 
         for (i = 1;i < segEnds.length;i++) {
             //console.log(segEnds[i], closestSeg.arr, i);
@@ -387,6 +417,8 @@ var Lighting = (function () {
                 }
             }
 
+            avgHeapD += closestSeg.size();
+
             if (closestSeg.top() !== curSeg) {
                 ray = new Phaser.Line(0, 0, 1, 0);
                 ray.rotateAround(0, 0, segEnds[i].originAngle());
@@ -401,6 +433,8 @@ var Lighting = (function () {
             }
         }
 
+        //console.log(avgHeapD / segEnds.length);
+
 
         for (i = 0;i < awns.length;i++) {
             awns[i] = new Phaser.Point(awns[i].x + x, awns[i].y + y);
@@ -411,6 +445,7 @@ var Lighting = (function () {
 
     return Lighting;
 }) ();
+
 
 var Light = (function() {
     var Light = function(x, y, fov, range, offset) {
@@ -446,16 +481,29 @@ var Light = (function() {
 
     Light.prototype.cast = function() {
         var castPoint = new Phaser.Point(this.x + this.offset, this.y).
-                                rotate(this.x, this.y, this.rotation);
+                                rotate(this.x, this.y, this.rotation),
+            rangeWorld = Conf.Guard.range * Conf.tileSize,
+            rect = new Phaser.Rectangle(castPoint.x - rangeWorld, 
+                                        castPoint.y - rangeWorld,
+                                        2 * rangeWorld,
+                                        2 * rangeWorld);
+
         this.lightArea.x = this.x;
         this.lightArea.y = this.y;
         this.lightArea.rotation = this.rotation;
 
+        // the whole Light is outside of the camera
+        if (!game.camera.view.intersects(rect)) {
+            return;
+        }
+
         this.visiblePolygon = this.lighting.visiblePolygon(castPoint.x,
-                                                           castPoint.y);
+                                                    castPoint.y, rect);
         this.lightArea.mask.clear();
         this.lightArea.mask.beginFill(0xFFFFFF);
-        this.lightArea.mask.drawShape(this.visiblePolygon);
+        for (var i = 0;i < 15;i++) {
+            this.lightArea.mask.drawShape(this.visiblePolygon);
+        }
     };
 
     Light.prototype.pointVisible = function(point) {

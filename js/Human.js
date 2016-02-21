@@ -95,14 +95,20 @@ Player = (function() {
     Player.constructor = Player;
 
     Player.prototype.update = function () {
+        var x = 0,
+            y = 0;
         if(this.cursors.up.isDown) {
-            this.walk(0, -1);
+            y = -1;
         } else if(this.cursors.down.isDown) {
-            this.walk(0, 1);
-        } else if(this.cursors.left.isDown) {
-            this.walk(-1, 0);
+            y = 1;
+        } if (this.cursors.left.isDown) {
+            x = -1;
         } else if(this.cursors.right.isDown) {
-            this.walk(1, 0);
+            x = 1;
+        }
+
+        if ((x !== 0) || (y !== 0)) {
+            this.walk(x, y);
         } else {
             this.stop();
         }
