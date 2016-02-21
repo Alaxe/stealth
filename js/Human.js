@@ -49,13 +49,19 @@ Human = (function () {
     };
 
     Human.prototype.getBodyCorners = function() {
-        return [
+        var ans = [
             new Phaser.Point(this.body.x, this.body.y),
             new Phaser.Point(this.body.x + this.body.width, this.body.y),
             new Phaser.Point(this.body.x, this.body.y + this.body.height),
             new Phaser.Point(this.body.x + this.body.width,
                              this.body.y + this.body.height)
-        ];
+        ], 
+            i = 0;
+
+        for (i = 0;i < ans.length;i++) {
+            ans[i].rotate(this.x, this.y, this.rotation);
+        }
+        return ans;
     };
     Human.prototype.getSpriteCorners = function() {
         return [
@@ -237,7 +243,7 @@ Guard = (function() {
         
         for (i = 0;i < playerCorners.length;i++) {
             if (this.light.pointVisible(playerCorners[i])) {
-                playerVisible = true;
+        //        playerVisible = true;
                 break;
             }
         }
