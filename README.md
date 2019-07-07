@@ -1,2 +1,2 @@
-# stealth
-A stealth game about stealing. (stealing not implemented yet.)
+# Stealth
+A stealth game about stealing.
